@@ -1,0 +1,147 @@
+{
+  "info": {
+    "name": "Insurance Agent MCP Prompts - Testing Collection",
+    "description": "Test all 5 MCP prompts with sample requests and expected responses",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1️⃣ Persona Generator",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"609ab060-cf41-4d83-a7fc-a4dab9aa22ad\"\n}"
+        },
+        "url": {
+          "raw": "https://hushed-magpie-545.convex.cloud/mcp/persona",
+          "protocol": "https",
+          "host": ["hushed-magpie-545", "convex", "cloud"],
+          "path": ["mcp", "persona"]
+        },
+        "description": "MCP Prompt 1: Persona Generator\n\nGenerates detailed insurance persona from email history\n\nExpected Response:\n{\n  \"status\": \"success\",\n  \"persona\": {\n    \"profile_name\": \"Conservative Investor\",\n    \"insurance_types\": [\"Life\", \"Health\"],\n    \"risk_profile\": \"conservative\",\n    \"engagement_level\": \"high\",\n    \"key_concerns\": [\"coverage\", \"affordability\"],\n    \"estimated_annual_premium\": 5000,\n    \"policy_count\": \"3\"\n  },\n  \"reasoning\": \"Generated from 20 insurance emails\"\n}"
+      }
+    },
+    {
+      "name": "2️⃣ Policy Analyzer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"609ab060-cf41-4d83-a7fc-a4dab9aa22ad\"\n}"
+        },
+        "url": {
+          "raw": "https://hushed-magpie-545.convex.cloud/mcp/policy",
+          "protocol": "https",
+          "host": ["hushed-magpie-545", "convex", "cloud"],
+          "path": ["mcp", "policy"]
+        },
+        "description": "MCP Prompt 2: Policy Analyzer\n\nDeep analysis of policy documents and terms\n\nExpected Response:\n{\n  \"status\": \"success\",\n  \"policies\": [\n    {\n      \"policy_number\": \"POL123456\",\n      \"type\": \"Life Insurance\",\n      \"provider\": \"HDFC Life\",\n      \"coverage_amount\": \"₹50 lakhs\",\n      \"renewal_date\": \"2024-06-30\",\n      \"status\": \"active\"\n    }\n  ],\n  \"compliance_score\": 85,\n  \"recommendations\": [\n    \"Consider increasing health insurance coverage\"\n  ]\n}"
+      }
+    },
+    {
+      "name": "3️⃣ Risk Assessment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"609ab060-cf41-4d83-a7fc-a4dab9aa22ad\"\n}"
+        },
+        "url": {
+          "raw": "https://hushed-magpie-545.convex.cloud/mcp/risk",
+          "protocol": "https",
+          "host": ["hushed-magpie-545", "convex", "cloud"],
+          "path": ["mcp", "risk"]
+        },
+        "description": "MCP Prompt 3: Risk Assessment\n\nEvaluates user risk profile based on email patterns and claims\n\nExpected Response:\n{\n  \"status\": \"success\",\n  \"risk_score\": 35,\n  \"risk_level\": \"low\",\n  \"risk_factors\": [\n    {\n      \"factor\": \"High claim frequency\",\n      \"severity\": \"low\",\n      \"description\": \"User has filed 2 claims in past year\"\n    }\n  ],\n  \"mitigation_strategies\": [\n    \"Maintain current coverage levels\",\n    \"Review preventive measures\"\n  ]\n}"
+      }
+    },
+    {
+      "name": "4️⃣ Recommendation Engine",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"609ab060-cf41-4d83-a7fc-a4dab9aa22ad\",\n  \"context\": \"Looking to optimize insurance premiums\"\n}"
+        },
+        "url": {
+          "raw": "https://hushed-magpie-545.convex.cloud/mcp/recommend",
+          "protocol": "https",
+          "host": ["hushed-magpie-545", "convex", "cloud"],
+          "path": ["mcp", "recommend"]
+        },
+        "description": "MCP Prompt 4: Recommendation Engine\n\nGenerates personalized insurance recommendations\n\nExpected Response:\n{\n  \"status\": \"success\",\n  \"recommendations\": [\n    {\n      \"title\": \"Bundle Life and Health Insurance\",\n      \"category\": \"savings\",\n      \"description\": \"Combining policies can save 15-20%\",\n      \"estimated_benefit\": \"₹5,000-8,000 annual savings\",\n      \"priority\": \"high\",\n      \"action_items\": [\n        \"Compare bundle quotes\",\n        \"Review coverage limits\"\n      ],\n      \"expected_timeline\": \"30 days\"\n    }\n  ],\n  \"overall_priority\": \"high\",\n  \"estimated_total_impact\": \"Save 15-20% on premiums\"\n}"
+      }
+    },
+    {
+      "name": "5️⃣ Conversation Simulator",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"609ab060-cf41-4d83-a7fc-a4dab9aa22ad\",\n  \"message\": \"I'm having trouble understanding my policy renewal terms. Can you help?\",\n  \"history\": []\n}"
+        },
+        "url": {
+          "raw": "https://hushed-magpie-545.convex.cloud/mcp/chat",
+          "protocol": "https",
+          "host": ["hushed-magpie-545", "convex", "cloud"],
+          "path": ["mcp", "chat"]
+        },
+        "description": "MCP Prompt 5: Conversation Simulator\n\nAI customer service conversations about insurance\n\nExpected Response:\n{\n  \"status\": \"success\",\n  \"agent_response\": \"I'd be happy to help! Policy renewal terms can be complex. Typically, renewal means your policy continues for another term at new premium rates. Can you share your policy number so I can give you specific details?\",\n  \"suggested_actions\": [\n    \"Provide policy number for detailed analysis\",\n    \"Review renewal timeline\",\n    \"Compare premium changes\"\n  ],\n  \"sentiment\": \"positive\"\n}"
+      }
+    },
+    {
+      "name": "💬 Chat Follow-up (Multi-turn)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"609ab060-cf41-4d83-a7fc-a4dab9aa22ad\",\n  \"message\": \"The renewal premium increased by 20%. Is that normal?\",\n  \"history\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"I'm having trouble understanding my policy renewal terms. Can you help?\"\n    },\n    {\n      \"role\": \"agent\",\n      \"content\": \"I'd be happy to help! Policy renewal terms can be complex. Can you share your policy number?\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "https://hushed-magpie-545.convex.cloud/mcp/chat",
+          "protocol": "https",
+          "host": ["hushed-magpie-545", "convex", "cloud"],
+          "path": ["mcp", "chat"]
+        },
+        "description": "Test multi-turn conversation with history context"
+      }
+    }
+  ]
+}

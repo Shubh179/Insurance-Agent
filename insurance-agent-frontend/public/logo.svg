@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Rich Navy Background (Professional/Corporate) -->
+    <linearGradient id="navyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" /> <!-- Slate 900 -->
+      <stop offset="100%" style="stop-color:#020617;stop-opacity:1" /> <!-- Slate 950 -->
+    </linearGradient>
+    
+    <!-- Metallic Gold (Value/Standard) -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" /> <!-- Amber 400 -->
+      <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:1" /> <!-- Amber 500 -->
+      <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" /> <!-- Amber 600 -->
+    </linearGradient>
+
+    <!-- Metallic Shine -->
+    <filter id="goldShine" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- BACKGROUND: The Dark Monolith -->
+  <path d="M256 32 L464 142 L464 362 L256 472 L48 362 L48 142 Z" 
+        fill="url(#navyGrad)" 
+        stroke="#334155" stroke-width="4" />
+
+  <!-- LOGIC PATHS: Gold Circuitry -->
+  <g transform="translate(256, 252)">
+     <!-- The "Gold Standard" Core -->
+     <path d="M0 -60 L52 -30 L52 30 L0 60 L-52 30 L-52 -30 Z" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>
+     <path d="M0 -40 L35 -20 L35 20 L0 40 L-35 20 L-35 -20 Z" fill="url(#goldGrad)" opacity="0.8"/>
+     
+     <!-- Radiating Lines (The Rules) -->
+     <!-- Top -->
+     <line x1="0" y1="-60" x2="0" y2="-120" stroke="url(#goldGrad)" stroke-width="6" stroke-linecap="round"/>
+     <!-- Bottom Right -->
+     <line x1="52" y1="30" x2="104" y2="60" stroke="url(#goldGrad)" stroke-width="6" stroke-linecap="round"/>
+     <!-- Bottom Left -->
+     <line x1="-52" y1="30" x2="-104" y2="60" stroke="url(#goldGrad)" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Checkmark: Subtle integration in the frame -->
+  <path d="M160 380 L256 430 L352 380" fill="none" stroke="url(#goldGrad)" stroke-width="8" stroke-opacity="0.5" stroke-linecap="round"/>
+
+</svg>
