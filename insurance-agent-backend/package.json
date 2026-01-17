@@ -1,0 +1,29 @@
+{
+  "name": "insurance-agent-backend",
+  "version": "0.1.0",
+  "description": "Insurance Chatbot Backend - Convex + Supabase + Gemini",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "convex dev",
+    "build": "convex push",
+    "deploy": "convex deploy",
+    "type-check": "tsc --noEmit",
+    "test": "npm run type-check"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.38.4",
+    "convex": "^1.31.3",
+    "dotenv": "^16.3.1",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "convex-cli": "latest",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

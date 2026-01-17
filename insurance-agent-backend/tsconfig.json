@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020"],
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["convex/*"],
+      "@auth/*": ["convex/auth/*"],
+      "@agents/*": ["convex/agents/*"],
+      "@gmail/*": ["convex/gmail/*"],
+      "@mcp/*": ["convex/mcp/*"],
+      "@utils/*": ["convex/utils/*"]
+    }
+  },
+  "include": ["convex/**/*.ts"],
+  "exclude": ["node_modules", ".convex", "dist"]
+}
