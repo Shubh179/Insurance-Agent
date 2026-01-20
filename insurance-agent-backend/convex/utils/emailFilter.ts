@@ -2,6 +2,7 @@ interface EmailInput {
   sender?: string;
   subject?: string;
   snippet?: string;
+  body?: string;
   attachments?: string[];
 }
 
@@ -19,6 +20,7 @@ interface DeterministicResult {
   isBorderline: boolean; // true if score 3-5
   category: "renewal" | "claim" | "payment" | "new_policy" | "general";
   reason: string;
+  hasStrongSignal?: boolean;
 }
 
 const SPAM_SENDER_TOKENS = ["noreply", "no-reply", "promo", "marketing"];
@@ -74,9 +76,6 @@ const INSURANCE_PROVIDERS = [
   "max life",
 ];
 
-const INSURANCE_ATTACHMENT_KEYWORDS = ["policy", "endorsement", "schedule"];
-
-// Category assignment rules based on keywords
 const CATEGORY_RULES: Record<string, string[]> = {
   renewal: ["renew", "expiry", "due", "reminder", "upcoming"],
   claim: ["claim", "settlement", "approval", "denied", "processing"],
@@ -113,43 +112,50 @@ export function isSpamEmail(email: EmailInput): boolean {
   const uppercaseWords = promoScore.split(/\s+/).filter((w) => w.length > 4 && w === w.toUpperCase());
   if (uppercaseWords.length >= 3) return true;
 
-  // Non-human sender domains (common promo patterns)
-  const senderDomain = sender.split("@")[1] || "";
-  if (/(info|promo|offers|marketing)\./.test(senderDomain)) return true;
-
   return false;
 }
 
 /**
  * STAGE 1: Deterministic Insurance Classification
  * 
- * Scoring rules:
- * - Policy number regex match → +5
- * - Insurance keywords in subject → +2
- * - Claim lifecycle terms → +3
- * - Currency + duration coupling (e.g., "$500/year") → +2
- * - Regulatory/legal phrases → +1
- * 
- * Decision thresholds:
- * - score ≥ 6 → insurance=true, source="deterministic"
- * - score ≤ 2 → insurance=false
- * - score 3–5 → borderline=true (triggers Gemini fallback)
- * 
- * This is ALWAYS run first. Gemini is only a fallback validator.
+ * Scores based on Subject, Snippet AND Body.
  */
 function deterministicInsuranceCheck(email: EmailInput): DeterministicResult {
   const sender = normalize(email.sender);
   const subject = normalize(email.subject);
   const snippet = normalize(email.snippet);
-  const combined = `${subject} ${snippet}`;
+  const body = normalize(email.body);
+  const combined = `${subject} ${snippet} ${body}`; // Search in body too!
 
   let score = 0;
   let reasons: string[] = [];
 
+  // ...
+  const STRONG_SIGNAL_PHRASES = [
+    "premium receipt",
+    "renewal notice",
+    "policy schedule",
+    "policy document",
+    "welcome letter",
+    "insurance advice",
+    "claim approval",
+    "claim settlement",
+  ];
+
+  let hasStrongSignal = false;
+
   // Policy number regex match → +5
+  // This is a STRONG SIGNAL
   if (POLICY_NUMBER_REGEX.test(combined)) {
     score += 5;
     reasons.push("policy_number_detected");
+    hasStrongSignal = true;
+  }
+
+  // Check for other strong signal phrases
+  if (containsKeyword(subject, STRONG_SIGNAL_PHRASES) || containsKeyword(snippet, STRONG_SIGNAL_PHRASES)) {
+    hasStrongSignal = true;
+    reasons.push("strong_signal_phrase_found");
   }
 
   // Insurance keywords in subject → +2
@@ -157,6 +163,8 @@ function deterministicInsuranceCheck(email: EmailInput): DeterministicResult {
     score += 2;
     reasons.push("insurance_keywords_in_subject");
   }
+
+
 
   // Claim lifecycle terms → +3
   if (containsKeyword(combined, CLAIM_LIFECYCLE_TERMS)) {
@@ -174,6 +182,53 @@ function deterministicInsuranceCheck(email: EmailInput): DeterministicResult {
   if (containsKeyword(combined, REGULATORY_PHRASES)) {
     score += 1;
     reasons.push("regulatory_phrases");
+  }
+
+  const NEGATIVE_FINANCE_TERMS = [
+    "mutual fund",
+    "systematic investment plan",
+    "sip",
+    "portfolio",
+    "demat",
+    "sharekhan",
+    "zerodha",
+    "groww",
+    "nse",
+    "bse",
+    "securities",
+    "stock broker",
+    "trading member",
+    "depository",
+    "cibil",
+    "credit score",
+    "experian",
+    "crc",
+    "personal loan",
+    "home loan",
+    "credit card statement",
+    "bank statement",
+  ];
+
+
+
+  // NEGATIVE FILTER: Exclude general finance/investments
+  const hasNegative = containsKeyword(combined, NEGATIVE_FINANCE_TERMS);
+  if (hasNegative) {
+    console.log(`[EmailFilter] ⛔ NEGATIVE TERM DETECTED in: "${subject}"`);
+    console.log(`[EmailFilter] Term found! Score -> 0. Reason: negative_finance_term_detected`);
+    return {
+      score: 0,
+      isBorderline: false,
+      category: "general",
+      reason: "negative_finance_term_detected",
+    };
+  } else {
+    // Debug log to see why it passed
+    if (subject.includes("nse") || subject.includes("securities")) {
+      console.log(`[EmailFilter] ⚠️ WARNING: NSE/Securities in subject but NOT caught by negative list?!`);
+      console.log(`[EmailFilter] Combined Text Dump (First 100): ${combined.substring(0, 100)}`);
+      console.log(`[EmailFilter] Checking against terms: ${JSON.stringify(NEGATIVE_FINANCE_TERMS)}`);
+    }
   }
 
   // Insurance provider names → +2 (additional signal)
@@ -203,18 +258,7 @@ function deterministicInsuranceCheck(email: EmailInput): DeterministicResult {
 
 /**
  * STAGE 2: Gemini Fallback Validation
- * 
- * Called ONLY if deterministic score is borderline (3-5).
- * Never used as primary classifier.
- * 
- * Acceptance criteria:
- * - is_insurance === true
- * - confidence >= 0.7
- * 
- * If accepted: source="gemini_fallback"
- * If rejected or error: drop email (insurance=false)
- * 
- * NOTE: Gemini reasoning is NOT stored in DB (only acceptance/rejection)
+ * Included Body in the prompt for deeper analysis.
  */
 async function geminiInsuranceFallback(email: EmailInput): Promise<{ isInsurance: boolean; confidence: number }> {
   if (!GEMINI_API_KEY) {
@@ -223,23 +267,38 @@ async function geminiInsuranceFallback(email: EmailInput): Promise<{ isInsurance
   }
 
   // Strict validation prompt - Gemini validates, doesn't classify
-  const prompt = `You are validating whether an email is a legitimate insurance-related communication.
+  // Strict validation prompt - Gemini validates, doesn't classify
+  const prompt = `You are an expert Insurance Email Analyzer.
+Your goal is to determine if this email is a VALID, TRANSACTIONAL Insurance communication (e.g., Policy Issued, Premium Due, Claim Status, Renewal Notice).
 
-Rules:
-- Answer ONLY with valid JSON
-- Do NOT guess
-- If unsure, return false
+STRICTLY EXCLUDE (Return false):
+- Mutual Fund / Investment / Stock Market emails (SIP, NFO, Portfolio, Demat)
+- Credit Score reports (CIBIL, Experian, Highmark)
+- Loan offers or General Bank Statements (unless specifically for an Insurance Premium)
+- Marketing/spam/promotional emails ("Buy now", "Limited offer", "Get insurance")
+- General "Newsletters" or "Articles" about insurance
 
-Given:
+Signals to look for (Positive):
+- Policy Numbers (e.g., "Policy No:", "Pol No:")
+- Premium Amounts / Due Dates
+- Specific Insurance Types: Life, Health, Motor, Term, Travel
+- Terms: "Sum Assured", "Coverage", "Claim ID", "Premium Receipt", "Renewal Notice"
+
+Given Email:
 Subject: ${email.subject || ""}
 Sender: ${email.sender || ""}
 Snippet: ${email.snippet || ""}
+Body: ${email.body ? email.body.substring(0, 5000) : "(no body)"}
 
-Respond with:
+Respond ONLY with valid JSON:
 {
-  "is_insurance": true | false,
-  "confidence": number (0-1)
+  "is_insurance": boolean, // true ONLY if it matches the Positive signals and is NOT in Exclude list
+  "confidence": number, // 0.0 to 1.0 (0.9+ for clear policy docs, 0.1 for mutual funds)
+  "reason": string // Short explanation (e.g., "Related to Mutual Funds", "Valid Life Insurance Renewal")
 }`;
+
+  console.log(`[EmailFilter] 📤 Sending to Gemini (Length: ${(email.body || "").length} chars):`);
+  console.log(`[EmailFilter] PROMPT PREVIEW:\n${prompt.substring(0, 500)}...\n[...truncated...]`);
 
   try {
     const res = await fetch(
@@ -267,8 +326,9 @@ Respond with:
     }
 
     const data = (await res.json()) as any;
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const parsed = JSON.parse(text.replace(/```json|```/g, "").trim()) as {
+    const combinedText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    console.log(`[EmailFilter] 📥 Gemini Response:\n${combinedText.substring(0, 500)}...`);
+    const parsed = JSON.parse(combinedText.replace(/```json|```/g, "").trim()) as {
       is_insurance?: boolean;
       confidence?: number;
     };
@@ -276,8 +336,6 @@ Respond with:
     const isInsurance = Boolean(parsed.is_insurance);
     const confidence = Math.min(Math.max(parsed.confidence || 0, 0), 1);
 
-    // Only accept if is_insurance=true AND confidence >= 0.7
-    // Gemini reasoning is NOT logged to DB
     return { isInsurance, confidence };
   } catch (err) {
     console.warn(`[EmailFilter] Gemini fallback error: ${String(err)}, treating as non-insurance`);
@@ -285,38 +343,20 @@ Respond with:
   }
 }
 
-/**
- * Deterministic categorization based on keywords only
- */
 function categorizeDeterministic(email: EmailInput): "insurance" | "spam" | "other" {
   const combined = `${normalize(email.subject)} ${normalize(email.snippet)}`;
-  
+
   for (const keywords of Object.values(CATEGORY_RULES)) {
     if (containsKeyword(combined, keywords)) {
       return "insurance";
     }
   }
 
-  return "insurance"; // All insurance emails get "insurance" category
+  return "insurance";
 }
 
-/**
- * MAIN CLASSIFICATION PIPELINE (Two-Stage: Deterministic → Gemini Fallback)
- * 
- * Stage 1: ALWAYS run deterministic rules first
- *   - If score ≥ 6: Return insurance=true (high confidence, deterministic)
- *   - If score ≤ 2: Return insurance=false (low confidence)
- *   - If score 3-5: Mark as borderline, proceed to Stage 2
- * 
- * Stage 2: ONLY for borderline cases
- *   - Call Gemini API as validator (NOT primary classifier)
- *   - Accept ONLY if is_insurance=true AND confidence >= 0.7
- *   - Otherwise treat as non-insurance
- * 
- * This is deterministic-first, AI-assisted, explainable, and production-safe.
- */
 export async function classifyEmail(email: EmailInput): Promise<ClassificationResult> {
-  // Stage 1: Spam check (deterministic)
+  // Stage 1: Spam check
   if (isSpamEmail(email)) {
     return {
       is_spam: true,
@@ -324,21 +364,22 @@ export async function classifyEmail(email: EmailInput): Promise<ClassificationRe
       category: "spam",
       confidence: 0.95,
       classified_by: "deterministic",
-      deterministic_score: -1, // Spam is explicitly marked
+      deterministic_score: -1,
     };
   }
 
   // Stage 1: Deterministic insurance classification
   const deterministicResult = deterministicInsuranceCheck(email);
-  const { score, isBorderline, category } = deterministicResult;
+  const { score, isBorderline, category, hasStrongSignal } = deterministicResult;
 
   console.log(
-    `[EmailFilter] Deterministic score: ${score}, borderline: ${isBorderline}, reason: ${deterministicResult.reason}`
+    `[EmailFilter] Deterministic score: ${score}, StrongSignal: ${hasStrongSignal}, reason: ${deterministicResult.reason}`
   );
 
-  // High confidence from deterministic rules → finalize immediately
-  // score ≥ 6 → insurance=true, return with deterministic source
-  if (score >= 6) {
+  // STRICTER RULE: To auto-accept (skip Gemini), must have score >= 6 AND a Strong Signal.
+  // NSE/Finance emails often get score 6 just from footer keywords ("Policy", "Claims"), but lack Strong Signals.
+  if (score >= 6 && hasStrongSignal) {
+    console.log(`[EmailFilter] Skipping Gemini: High score (${score}) + Strong Signal. (Accepted).`);
     return {
       is_spam: false,
       is_insurance_related: true,
@@ -347,11 +388,12 @@ export async function classifyEmail(email: EmailInput): Promise<ClassificationRe
       classified_by: "deterministic",
       deterministic_score: score,
     };
+  } else if (score >= 6 && !hasStrongSignal) {
+    console.log(`[EmailFilter] Score is High (${score}) but NO Strong Signal. Demoting to Gemini check.`);
   }
 
-  // Very low score → insurance=false, return immediately
-  // score ≤ 2 → insurance=false
   if (score <= 2) {
+    console.log(`[EmailFilter] Skipping Gemini: Deterministic score ${score} is too low (Rejected).`);
     return {
       is_spam: false,
       is_insurance_related: false,
@@ -362,12 +404,10 @@ export async function classifyEmail(email: EmailInput): Promise<ClassificationRe
     };
   }
 
-  // Borderline case (score 3-5): Call Gemini API as validator fallback
-  // Gemini is ONLY used here, never as primary classifier
+  // Borderline: Call Gemini with FULL BODY if available
   console.log(`[EmailFilter] Borderline score (${score}), calling Gemini validator...`);
   const geminiResult = await geminiInsuranceFallback(email);
 
-  // Accept Gemini result ONLY if is_insurance=true AND confidence >= 0.7
   if (geminiResult.isInsurance && geminiResult.confidence >= 0.7) {
     console.log(
       `[EmailFilter] Gemini accepted (is_insurance=true, confidence=${geminiResult.confidence})`
@@ -377,12 +417,11 @@ export async function classifyEmail(email: EmailInput): Promise<ClassificationRe
       is_insurance_related: true,
       category: categorizeDeterministic(email),
       confidence: geminiResult.confidence,
-      classified_by: "gemini_fallback", // Source tracks that Gemini was used
+      classified_by: "gemini_fallback",
       deterministic_score: score,
     };
   }
 
-  // Gemini rejected or low confidence → treat as non-insurance
   console.log(
     `[EmailFilter] Gemini rejected or low confidence (is_insurance=${geminiResult.isInsurance}, confidence=${geminiResult.confidence})`
   );
@@ -391,7 +430,7 @@ export async function classifyEmail(email: EmailInput): Promise<ClassificationRe
     is_insurance_related: false,
     category: "other",
     confidence: Math.min(score * 0.1, 0.3),
-    classified_by: "deterministic", // Fell back to deterministic rejection
+    classified_by: "deterministic",
     deterministic_score: score,
   };
 }

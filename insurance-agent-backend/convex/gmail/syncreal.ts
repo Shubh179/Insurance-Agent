@@ -250,12 +250,60 @@ async function fetchAllGmailMessages(
         const dateHeader = getHeader(hdrs, "date");
         const snippet = msgData.snippet || "";
 
-        // Parse received_at from internalDate (milliseconds since epoch)
+        // Helper to extract body from payload
+        function extractBody(payload: any): string {
+          if (!payload) return "";
+
+          // Safe decode function for Convex runtime (no Buffer)
+          const decode = (str: string) => {
+            try {
+              // Fix URL-safe Base64
+              const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+              // Decode basic chars
+              const binaryStr = atob(base64);
+              // Convert to bytes to handle UTF-8 correctly via TextDecoder if available, or simple escape
+              // Simple polyfill for UTF-8 decoding in browser/Edge envs:
+              return decodeURIComponent(escape(binaryStr));
+            } catch (e) {
+              console.warn("[Gmail] Failed to decode body part", e);
+              return "";
+            }
+          };
+
+          let body = "";
+
+          // Try to find the HTML or Text part
+          if (payload.body && payload.body.data) {
+            body = decode(payload.body.data);
+          } else if (payload.parts) {
+            for (const part of payload.parts) {
+              if (part.mimeType === 'text/plain' && part.body && part.body.data) {
+                body = decode(part.body.data);
+                break; // Prefer text/plain first
+              } else if (part.mimeType === 'text/html' && part.body && part.body.data) {
+                // If no text/plain yet, keep html (but keep searching for text/plain)
+                if (!body) body = decode(part.body.data);
+              }
+              // Handle nested parts (multipart/alternative inside multipart/mixed)
+              if (part.parts) {
+                const nestedBody = extractBody(part);
+                if (nestedBody) body = nestedBody;
+              }
+            }
+          }
+          return body || "";
+        }
+
+        // ... inside fetchAllGmailMessages loop ...
+        // Parse received_at
         const receivedAt = msgData.internalDate
           ? new Date(parseInt(msgData.internalDate)).toISOString()
           : new Date().toISOString();
 
-        // Classify email (deterministic rules, no LLM)
+        // extract body
+        const fullBody = extractBody(msgData.payload);
+
+        // Classify email (deterministic rules + body check)
         let classification: any = {
           is_insurance_related: false,
           is_spam: false,
@@ -269,6 +317,7 @@ async function fetchAllGmailMessages(
             sender: fromHeader,
             subject: subjectHeader,
             snippet,
+            body: fullBody, // Deep analysis!
             attachments: [],
           });
         } catch (classifyError) {
@@ -282,11 +331,10 @@ async function fetchAllGmailMessages(
 
         // Only store insurance-related emails
         if (classification.is_insurance_related) {
-          // Map classifier values to database-allowed values: 'rules' or 'rules+ai'
-          let classifiedByValue: "rules" | "rules+ai" = "rules";
-          if (classification.classified_by === "gemini_fallback") {
-            classifiedByValue = "rules+ai"; // Gemini validation counts as AI-assisted rules
-          }
+          // ...
+          // Map 'deterministic' -> 'rules', 'gemini_fallback' -> 'rules+ai'
+          const rawFn = classification.classified_by || "rules";
+          const dbValue = rawFn === "gemini_fallback" ? "rules+ai" : "rules";
 
           emailsToInsert.push({
             user_id: userId,
@@ -294,18 +342,19 @@ async function fetchAllGmailMessages(
             sender: fromHeader || "unknown",
             subject: subjectHeader || "(no subject)",
             raw_snippet: snippet,
+            body: fullBody, // Store the full body!
             is_insurance_related: true,
             is_spam: classification.is_spam || false,
             category: resolvedCategory,
             confidence: classification.confidence || 0,
-            classified_by: classifiedByValue,
+            classified_by: dbValue,
             received_at: receivedAt,
           });
         }
       } catch (error) {
         console.error(`[Gmail] Error processing message ${msg.id}: ${String(error)}`);
       }
-    }
+    } // End of message loop
 
     // Get next page token
     pageToken = listData.nextPageToken;
@@ -330,22 +379,12 @@ async function fetchAllGmailMessages(
         .upsert(emailsToInsert, { onConflict: "gmail_message_id" });
 
       if (upsertError) {
-        console.error(`[Gmail] ✗ Upsert error:`, upsertError);
-        console.error(`[Gmail] Error details: ${JSON.stringify(upsertError)}`);
         throw new Error(`Failed to store emails: ${upsertError.message}`);
       }
 
       console.log(`[Gmail] ✓ Upsert successful! Count: ${upsertCount}, Processed: ${emailsToInsert.length}`);
-      console.log(`[Gmail] Upsert result data:`, upsertData);
-
-      return {
-        totalFetched,
-        totalInserted: emailsToInsert.length,
-        emails: emailsToInsert,
-      };
     } catch (upsertError) {
       console.error(`[Gmail] ✗ Upsert exception: ${String(upsertError)}`);
-      console.error(`[Gmail] Full error:`, upsertError);
       throw upsertError;
     }
   } else {
@@ -354,10 +393,10 @@ async function fetchAllGmailMessages(
 
   return {
     totalFetched,
-    totalInserted,
+    totalInserted: emailsToInsert.length,
     emails: emailsToInsert
   };
-}
+} // End of fetchAllGmailMessages
 
 /**
  * Sync ALL Gmail emails from last 10 days using deterministic pagination
@@ -420,7 +459,7 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
       }
     }
 
-    console.log(`[Gmail] Starting full 10-day sync`);
+    console.log(`[Gmail] Starting full 10-day sync (Logic v2.2 - FORCE UPDATE)`);
 
     // Validate session and get user_id
     const userId = await validateSessionAndGetUserId(sessionToken);

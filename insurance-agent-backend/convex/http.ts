@@ -389,7 +389,7 @@ http.route({
   }),
 });
 
-// Gmail endpoints
+// Gmail endpoints - Updated definition
 http.route({
   path: "/gmail/sync",
   method: "POST",

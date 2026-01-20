@@ -21,6 +21,7 @@ export default defineSchema({
     sender: v.string(),
     subject: v.string(),
     rawSnippet: v.optional(v.string()),
+    body: v.optional(v.string()),
     isSpam: v.boolean(),
     isInsuranceRelated: v.boolean(),
     category: v.optional(v.string()), // "insurance", "spam", "other"
