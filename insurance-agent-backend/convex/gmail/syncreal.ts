@@ -437,7 +437,7 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
     const sessionToken = authHeader.substring(7);
 
     // Parse request body (validate no tokens passed)
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = await request.json().catch(() => ({})) as Record<string, unknown>;
 
     const forbiddenTokenKeys = ["access_token", "refresh_token", "id_token", "token", "oauth_token"];
     for (const key of forbiddenTokenKeys) {

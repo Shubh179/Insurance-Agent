@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowUp, Menu, Zap, Archive, Clock, Shield, FileText, DollarSign, ShieldAlert, ShieldCheck, Lightbulb, Mail, LogOut } from 'lucide-react';
 import './ChatInterface.css';
 
@@ -49,23 +50,59 @@ export default function ChatInterface() {
         fetchProfile();
     }, []);
 
+    const navigate = useNavigate();
+
     const handleLogout = () => {
         localStorage.removeItem('session_token');
-        window.location.reload();
+        navigate('/');
     };
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!inputValue.trim()) return;
         const userText = inputValue;
         setMessages(prev => [...prev, { text: userText, isUser: true }]);
         setInputValue("");
         setShowSuggestions(false);
 
-        // Simulate thinking...
-        setTimeout(() => {
-            setMessages(prev => [...prev, { text: "Analysis complete. Based on the underwriting guidelines for Q3, your current liability exposure is within acceptable variance (±2.5%). However, I recommend a review of the umbrella policy addendum attached to your renewal draft.", isUser: false }]);
-            setShowSuggestions(true);
-        }, 800);
+        try {
+            const token = localStorage.getItem('session_token');
+            const history = messages.map(m => ({
+                role: m.isUser ? 'user' : 'model',
+                content: m.text
+            }));
+
+            // Add loading state message
+            setMessages(prev => [...prev, { text: "Thinking...", isUser: false, isLoading: true }]);
+
+            const response = await fetch('https://greedy-nightingale-153.convex.site/mcp/chat', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: userText,
+                    history: history
+                })
+            });
+
+            // Remove loading message
+            setMessages(prev => prev.filter(m => !m.isLoading));
+
+            if (!response.ok) {
+                setMessages(prev => [...prev, { text: "Sorry, I encountered an error connecting to the agent.", isUser: false }]);
+            } else {
+                const data = await response.json();
+                setMessages(prev => [...prev, { text: formatMCPResponse('chat', data), isUser: false }]);
+
+                // If there are suggested actions, we could potentially show them as chips, 
+                // but formatMCPResponse already includes them in text.
+            }
+        } catch (err) {
+            setMessages(prev => prev.filter(m => !m.isLoading));
+            setMessages(prev => [...prev, { text: "Connection error. Please try again.", isUser: false }]);
+        }
+        setShowSuggestions(true);
     };
 
     // Helper to format MCP responses into readable text
@@ -277,18 +314,20 @@ export default function ChatInterface() {
         }, 1000);
     }
 
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncError, setSyncError] = useState(null);
+
     const handleSync = async () => {
         try {
             const token = localStorage.getItem('session_token');
             if (!token) {
-                // Silent return or redirect to login in real app
+                setSyncError('Please log in first.');
                 return;
             }
 
-            // UI feedback immediately
-            setIsSynced(true);
+            setIsSyncing(true);
+            setSyncError(null);
 
-            // Call backend to start sync
             const response = await fetch('https://greedy-nightingale-153.convex.site/gmail/sync', {
                 method: 'POST',
                 headers: {
@@ -299,16 +338,29 @@ export default function ChatInterface() {
             });
 
             if (!response.ok) {
-                console.error('Sync failed:', await response.text());
-                localStorage.removeItem('gmail_synced'); // Revert on failure
+                const errText = await response.text();
+                console.error('Sync failed:', errText);
+                localStorage.removeItem('gmail_synced');
                 setIsSynced(false);
+                try {
+                    const errData = JSON.parse(errText);
+                    setSyncError(errData.details || errData.error || 'Sync failed. Please try again.');
+                } catch {
+                    setSyncError('Sync failed. Please try again.');
+                }
             } else {
                 const data = await response.json();
                 console.log('Sync Successful', data);
                 localStorage.setItem('gmail_synced', 'true');
+                setIsSynced(true);
             }
         } catch (err) {
             console.error('Error syncing:', err);
+            localStorage.removeItem('gmail_synced');
+            setIsSynced(false);
+            setSyncError('Connection error. Please check your network and try again.');
+        } finally {
+            setIsSyncing(false);
         }
     };
     const handleNewSession = () => {
@@ -441,23 +493,26 @@ export default function ChatInterface() {
                                     padding: '10px 24px',
                                     borderRadius: '8px',
                                     fontWeight: '500',
-                                    cursor: 'pointer',
-                                    marginBottom: '24px',
+
+                                    marginBottom: syncError ? '8px' : '24px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
                                     fontSize: '0.9rem',
                                     transition: 'background 0.2s',
-                                    opacity: isSynced ? 0.5 : 1,
-                                    cursor: isSynced ? 'default' : 'pointer',
-                                    pointerEvents: isSynced ? 'none' : 'auto'
+                                    opacity: (isSynced || isSyncing) ? 0.5 : 1,
+                                    cursor: (isSynced || isSyncing) ? 'default' : 'pointer',
+                                    pointerEvents: (isSynced || isSyncing) ? 'none' : 'auto'
                                 }}
                                     onClick={handleSync}
-                                    onMouseOver={(e) => !isSynced && (e.currentTarget.style.background = '#2563EB')}
-                                    onMouseOut={(e) => !isSynced && (e.currentTarget.style.background = '#3B82F6')}
+                                    onMouseOver={(e) => !isSynced && !isSyncing && (e.currentTarget.style.background = '#2563EB')}
+                                    onMouseOut={(e) => !isSynced && !isSyncing && (e.currentTarget.style.background = '#3B82F6')}
                                 >
-                                    <Mail size={18} /> {isSynced ? 'Synced' : 'Sync with Gmail'}
+                                    <Mail size={18} /> {isSyncing ? 'Syncing...' : isSynced ? 'Synced' : 'Sync with Gmail'}
                                 </button>
+                                {syncError && (
+                                    <p style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '16px', textAlign: 'center' }}>{syncError}</p>
+                                )}
 
                                 {isSynced && (
                                     <div className="suggestions-section" style={{ width: '100%', maxWidth: '700px' }}>
@@ -478,28 +533,35 @@ export default function ChatInterface() {
                         ) : (
                             <div className="messages-list">
                                 {!isSynced && (
-                                    <button style={{
-                                        background: '#3B82F6',
-                                        color: 'white',
-                                        border: 'none',
-                                        padding: '10px 24px',
-                                        borderRadius: '8px',
-                                        fontWeight: '500',
-                                        marginBottom: '24px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        fontSize: '0.9rem',
-                                        transition: 'background 0.2s',
-                                        cursor: 'pointer',
-                                        margin: '0 auto 24px auto'
-                                    }}
-                                        onClick={handleSync}
-                                        onMouseOver={(e) => e.currentTarget.style.background = '#2563EB'}
-                                        onMouseOut={(e) => e.currentTarget.style.background = '#3B82F6'}
-                                    >
-                                        <Mail size={18} /> Sync with Gmail
-                                    </button>
+                                    <>
+                                        <button style={{
+                                            background: '#3B82F6',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '10px 24px',
+                                            borderRadius: '8px',
+                                            fontWeight: '500',
+                                            marginBottom: syncError ? '8px' : '24px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            fontSize: '0.9rem',
+                                            transition: 'background 0.2s',
+                                            cursor: isSyncing ? 'default' : 'pointer',
+                                            opacity: isSyncing ? 0.5 : 1,
+                                            pointerEvents: isSyncing ? 'none' : 'auto',
+                                            margin: '0 auto 24px auto'
+                                        }}
+                                            onClick={handleSync}
+                                            onMouseOver={(e) => !isSyncing && (e.currentTarget.style.background = '#2563EB')}
+                                            onMouseOut={(e) => !isSyncing && (e.currentTarget.style.background = '#3B82F6')}
+                                        >
+                                            <Mail size={18} /> {isSyncing ? 'Syncing...' : 'Sync with Gmail'}
+                                        </button>
+                                        {syncError && (
+                                            <p style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '16px', textAlign: 'center' }}>{syncError}</p>
+                                        )}
+                                    </>
                                 )}
                                 {messages.map((msg, idx) => (
                                     <div key={idx} className={`message-row ${msg.isUser ? 'user' : 'assistant'}`}>
