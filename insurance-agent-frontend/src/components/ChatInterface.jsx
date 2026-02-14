@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUp, Menu, Zap, Archive, Clock, Shield, FileText, DollarSign, ShieldAlert, ShieldCheck, Lightbulb, Mail, LogOut } from 'lucide-react';
+import { ArrowUp, Menu, X, Zap, Archive, Clock, Shield, FileText, DollarSign, ShieldAlert, ShieldCheck, Lightbulb, Mail, LogOut } from 'lucide-react';
 import './ChatInterface.css';
 
 export default function ChatInterface() {
@@ -379,13 +379,18 @@ export default function ChatInterface() {
     };
 
     const [showEmailTooltip, setShowEmailTooltip] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
         <div className="chat-layout">
-            <aside className="sidebar">
+            <div className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`} onClick={() => setSidebarOpen(false)} />
+            <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-header">
                     <img src="/logo.svg" alt="Logo" style={{ height: '32px', width: 'auto' }} />
                     <span className="brand-name">Agent Insure</span>
+                    <button className="mobile-menu-btn" style={{ marginLeft: 'auto' }} onClick={() => setSidebarOpen(false)}>
+                        <X size={20} />
+                    </button>
                 </div>
 
                 <button className="new-chat-btn" onClick={handleNewSession}>
@@ -461,10 +466,15 @@ export default function ChatInterface() {
             <main className="chat-main">
                 {/* Header */}
                 <header className="chat-header">
-                    <div className="header-co">
-                        <h2>Insurance AI Agent</h2>
-                        <div className="status-badge" style={{ marginTop: '4px' }}>
-                            <span className="dot"></span> Online
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
+                            <Menu size={20} />
+                        </button>
+                        <div className="header-co">
+                            <h2>Insurance AI Agent</h2>
+                            <div className="status-badge" style={{ marginTop: '4px' }}>
+                                <span className="dot"></span> Online
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -477,11 +487,11 @@ export default function ChatInterface() {
                         {messages.length === 0 ? (
                             <div className="empty-state">
                                 <div className="welcome-msg" style={{ width: '100%', maxWidth: '700px', margin: '0 0 16px 0' }}>
-                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'rgba(30, 41, 59, 0.5)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <Shield size={20} color="#3B82F6" />
-                                        <div style={{ textAlign: 'left' }}>
-                                            <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'white', margin: 0, lineHeight: '1.2' }}>Hello! I'm your Insurance AI Agent.</h3>
-                                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0, lineHeight: '1.2' }}>Ready to analyze your policies and risk exposure.</p>
+                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(30, 41, 59, 0.5)', padding: '10px 14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <Shield size={20} color="#3B82F6" style={{ flexShrink: 0 }} />
+                                        <div style={{ textAlign: 'left', minWidth: 0 }}>
+                                            <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'white', margin: 0, lineHeight: '1.3' }}>Hello! I'm your Insurance AI Agent.</h3>
+                                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0, lineHeight: '1.3' }}>Ready to analyze your policies and risk exposure.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -493,16 +503,19 @@ export default function ChatInterface() {
                                     padding: '10px 24px',
                                     borderRadius: '8px',
                                     fontWeight: '500',
-
                                     marginBottom: syncError ? '8px' : '24px',
                                     display: 'flex',
                                     alignItems: 'center',
+                                    justifyContent: 'center',
                                     gap: '8px',
                                     fontSize: '0.9rem',
                                     transition: 'background 0.2s',
                                     opacity: (isSynced || isSyncing) ? 0.5 : 1,
                                     cursor: (isSynced || isSyncing) ? 'default' : 'pointer',
-                                    pointerEvents: (isSynced || isSyncing) ? 'none' : 'auto'
+                                    pointerEvents: (isSynced || isSyncing) ? 'none' : 'auto',
+                                    minHeight: '44px',
+                                    width: '100%',
+                                    maxWidth: '280px'
                                 }}
                                     onClick={handleSync}
                                     onMouseOver={(e) => !isSynced && !isSyncing && (e.currentTarget.style.background = '#2563EB')}
@@ -544,13 +557,17 @@ export default function ChatInterface() {
                                             marginBottom: syncError ? '8px' : '24px',
                                             display: 'flex',
                                             alignItems: 'center',
+                                            justifyContent: 'center',
                                             gap: '8px',
                                             fontSize: '0.9rem',
                                             transition: 'background 0.2s',
                                             cursor: isSyncing ? 'default' : 'pointer',
                                             opacity: isSyncing ? 0.5 : 1,
                                             pointerEvents: isSyncing ? 'none' : 'auto',
-                                            margin: '0 auto 24px auto'
+                                            margin: '0 auto 24px auto',
+                                            minHeight: '44px',
+                                            maxWidth: '280px',
+                                            width: '100%'
                                         }}
                                             onClick={handleSync}
                                             onMouseOver={(e) => !isSyncing && (e.currentTarget.style.background = '#2563EB')}
@@ -571,7 +588,7 @@ export default function ChatInterface() {
                                 ))}
 
                                 {showSuggestions && isSynced && suggestions.length > 0 && (
-                                    <div className="suggestions-section" style={{ width: '100%', maxWidth: '700px', marginTop: '20px', marginLeft: '48px' }}>
+                                    <div className="suggestions-section" style={{ width: '100%', maxWidth: '700px', marginTop: '20px' }}>
                                         <h4 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '4px' }}>Suggested Questions</h4>
                                         <div className="suggestions-list" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                             {suggestions.map((s) => (

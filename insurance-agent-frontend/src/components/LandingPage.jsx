@@ -83,7 +83,10 @@ export default function LandingPage({ onLogin }) {
                             alignItems: 'center',
                             filter: 'drop-shadow(0 0 80px rgba(139, 92, 246, 0.15))',
                             position: 'relative',
-                            top: '-100px'
+                            top: '-100px',
+                            width: '100%',
+                            maxWidth: '580px',
+                            margin: '0 auto'
                         }}
                     >
                         <img
@@ -98,26 +101,26 @@ export default function LandingPage({ onLogin }) {
                             }}
                         />
 
-                        {/* Floating AI Badge */}
-                        <div style={{
+                        {/* Floating AI Badge - hidden on small screens via CSS class */}
+                        <div className="floating-badge" style={{
                             position: 'absolute',
                             bottom: '15%',
                             left: '5%',
                             background: 'rgba(15, 23, 42, 0.85)',
                             backdropFilter: 'blur(16px)',
-                            padding: '16px 28px',
-                            borderRadius: '16px',
+                            padding: '12px 20px',
+                            borderRadius: '12px',
                             border: '1px solid rgba(255,255,255,0.1)',
                             boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
                             transform: 'translateZ(40px)',
                             display: 'flex',
-                            gap: '16px',
+                            gap: '12px',
                             alignItems: 'center'
                         }}>
-                            <div className="dot-pulse" style={{ background: '#8B5CF6', width: '12px', height: '12px', borderRadius: '50%', boxShadow: '0 0 10px #8B5CF6' }}></div>
+                            <div className="dot-pulse" style={{ background: '#8B5CF6', width: '10px', height: '10px', borderRadius: '50%', boxShadow: '0 0 10px #8B5CF6', flexShrink: 0 }}></div>
                             <div>
-                                <div style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Core Processing</div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'white' }}>Quantum Node Active</div>
+                                <div style={{ fontSize: '0.7rem', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Core Processing</div>
+                                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'white' }}>Quantum Node Active</div>
                             </div>
                         </div>
                     </div>

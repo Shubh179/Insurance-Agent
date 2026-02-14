@@ -345,23 +345,159 @@
     opacity: 0.8;
 }
 
+/* Mobile menu button - hidden on desktop */
+.mobile-menu-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s;
+}
+
+.mobile-menu-btn:hover {
+    background: var(--card-bg);
+}
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .sidebar {
-        display: none;
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100vh;
+        z-index: 100;
+        transition: left 0.3s ease;
+        background: var(--sidebar-bg);
+    }
+
+    .sidebar.open {
+        left: 0;
+    }
+
+    .sidebar-overlay {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 99;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .sidebar-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .suggestions-grid {
         grid-template-columns: 1fr;
     }
 
-    .chat-header,
-    .chat-content,
+    .chat-header {
+        padding: 0 16px;
+        height: 52px;
+    }
+
+    .chat-content {
+        padding: 10px 0 100px 0;
+    }
+
+    .content-wrapper {
+        padding: 0 12px;
+    }
+
     .input-area {
-        padding-left: 16px;
-        padding-right: 16px;
+        padding: 16px 0;
     }
 
     .input-wrapper {
-        margin: 0;
+        margin: 0 12px;
+        padding: 3px 3px 3px 12px;
+    }
+
+    .input-wrapper input {
+        font-size: 16px; /* Prevents iOS zoom on focus */
+        height: 44px;
+    }
+
+    .send-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .message-row {
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .message-bubble {
+        font-size: 0.9rem;
+    }
+
+    .welcome-msg h3 {
+        font-size: 1.15rem;
+    }
+
+    .welcome-msg p {
+        font-size: 0.85rem;
+    }
+
+    .suggestion-card {
+        padding: 10px 14px;
+    }
+
+    .suggestion-card p {
+        font-size: 0.82rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-header {
+        padding: 0 12px;
+        height: 48px;
+    }
+
+    .header-co h2 {
+        font-size: 0.8rem;
+    }
+
+    .status-badge {
+        font-size: 0.65rem;
+    }
+
+    .content-wrapper {
+        padding: 0 8px;
+    }
+
+    .input-wrapper {
+        margin: 0 8px;
+    }
+
+    .message-bubble {
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    .agent-avatar-small {
+        width: 24px;
+        height: 24px;
     }
 }
