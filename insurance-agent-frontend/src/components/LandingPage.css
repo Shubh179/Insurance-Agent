@@ -348,7 +348,14 @@
     }
 
     .hero-visual {
-        display: none;
+        height: auto;
+        max-height: 250px;
+        overflow: hidden;
+        margin-top: 20px;
+    }
+
+    .hero-visual .glass-interface {
+        top: 0 !important;
     }
 
     .btn-premium,
