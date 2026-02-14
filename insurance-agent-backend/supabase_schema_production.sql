@@ -94,6 +94,17 @@ CREATE INDEX IF NOT EXISTS idx_agent_logs_user_id ON agent_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_agent_logs_status ON agent_logs(status);
 CREATE INDEX IF NOT EXISTS idx_agent_logs_agent_type ON agent_logs(agent_type);
 
+-- Rate Limits Table (for API rate limiting)
+CREATE TABLE IF NOT EXISTS rate_limits (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL,
+    requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_rate_limits_user_endpoint ON rate_limits(user_id, endpoint);
+CREATE INDEX IF NOT EXISTS idx_rate_limits_requested_at ON rate_limits(requested_at);
+
 -- Function to auto-update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$

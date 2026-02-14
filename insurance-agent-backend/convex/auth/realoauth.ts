@@ -27,6 +27,7 @@ export const googleAuthStart = httpAction(async (_ctx: any, request: Request) =>
   console.log("🔥 Request URL:", request.url);
 
   try {
+    const state = generateRandomState();
     const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     googleAuthUrl.searchParams.append("client_id", GOOGLE_CLIENT_ID!);
     googleAuthUrl.searchParams.append("redirect_uri", REDIRECT_URI);
@@ -39,7 +40,7 @@ export const googleAuthStart = httpAction(async (_ctx: any, request: Request) =>
       "profile",
       "https://www.googleapis.com/auth/gmail.readonly",
     ].join(" "));
-    googleAuthUrl.searchParams.append("state", generateRandomState());
+    googleAuthUrl.searchParams.append("state", state);
 
     console.log(`[OAuth] Starting Google auth flow, redirecting to Google with redirect_uri=${REDIRECT_URI}`);
 
@@ -47,6 +48,7 @@ export const googleAuthStart = httpAction(async (_ctx: any, request: Request) =>
       status: 302,
       headers: {
         "Location": googleAuthUrl.toString(),
+        "Set-Cookie": `oauth_state=${state}; HttpOnly; Secure; SameSite=Lax; Max-Age=600; Path=/`,
       },
     });
   } catch (error) {
@@ -97,6 +99,20 @@ export const googleAuthCallback = httpAction(async (_ctx: any, request: Request)
         { status: 400, headers: { "Content-Type": "text/html" } }
       );
     }
+
+    // CSRF: Validate state parameter against cookie
+    const cookieHeader = request.headers.get("Cookie") || "";
+    const stateCookie = cookieHeader.split(";").map(c => c.trim()).find(c => c.startsWith("oauth_state="));
+    const expectedState = stateCookie ? stateCookie.split("=")[1] : null;
+
+    if (!state || !expectedState || state !== expectedState) {
+      console.error(`[OAuth] CSRF state mismatch: expected=${expectedState}, got=${state}`);
+      return new Response(
+        `<html><body><h1>Error</h1><p>Invalid state parameter. Please restart the login process.</p></body></html>`,
+        { status: 403, headers: { "Content-Type": "text/html" } }
+      );
+    }
+    console.log(`[OAuth] CSRF state validated successfully`);
 
     console.log(`[OAuth] Received authorization code, exchanging for tokens...`);
 
@@ -222,11 +238,12 @@ export const googleAuthCallback = httpAction(async (_ctx: any, request: Request)
 
     console.log(`[OAuth] Created session: ${session.id}, expires in 7 days`);
 
-    // Step 2f: Redirect to frontend with session token
+    // Step 2f: Redirect to frontend with session token (clear CSRF cookie)
     return new Response(null, {
       status: 302,
       headers: {
-        "Location": `http://localhost:5173?token=${sessionToken}`,
+        "Location": `https://insurance-agent-frontend-kappa.vercel.app?token=${sessionToken}`,
+        "Set-Cookie": "oauth_state=; HttpOnly; Secure; SameSite=Lax; Max-Age=0; Path=/",
       },
     });
   } catch (error) {

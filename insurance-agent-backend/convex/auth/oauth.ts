@@ -332,7 +332,7 @@ export const getMe = httpAction(async (_ctx: any, request: Request) => {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
         },
       }
     );
@@ -344,7 +344,7 @@ export const getMe = httpAction(async (_ctx: any, request: Request) => {
         status: 500,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
         }
       }
     );

@@ -1,5 +1,5 @@
 import { httpAction } from "../_generated/server";
-import { getSupabaseClient } from "../utils/supabase";
+import { getSupabaseClient, checkRateLimit } from "../utils/supabase";
 import { classifyEmail } from "../utils/emailFilter";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -413,7 +413,7 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
           status: 405,
           headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
           }
         }
       );
@@ -428,7 +428,7 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
           status: 401,
           headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
           }
         }
       );
@@ -452,7 +452,7 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
             status: 400,
             headers: {
               "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*"
+              "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
             }
           }
         );
@@ -464,6 +464,21 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
     // Validate session and get user_id
     const userId = await validateSessionAndGetUserId(sessionToken);
     console.log(`[Gmail] Session validated for user: ${userId}`);
+
+    // Rate limit: max 3 syncs per 5 minutes per user
+    const rateCheck = await checkRateLimit(supabase, userId, "/gmail/sync", 3, 5);
+    if (!rateCheck.allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many sync requests", details: `Please wait before syncing again`, retryAfterSeconds: rateCheck.retryAfterSeconds }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
+          }
+        }
+      );
+    }
 
     // Get Google provider
     const provider = await getGoogleProvider(userId);
@@ -496,7 +511,7 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
         }
       }
     );
@@ -511,7 +526,7 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
           status: 401,
           headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
           }
         }
       );
@@ -525,7 +540,7 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
           status: 401,
           headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
           }
         }
       );
@@ -542,7 +557,7 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
           status: 403,
           headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
           }
         }
       );
@@ -558,7 +573,7 @@ export const gmailSyncReal = httpAction(async (_ctx: any, request: Request) => {
         status: 500,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "https://insurance-agent-frontend-kappa.vercel.app"
         }
       }
     );
