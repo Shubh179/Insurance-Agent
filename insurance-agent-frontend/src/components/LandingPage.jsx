@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, Activity, Lock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import './LandingPage.css';
 
 const GoogleIcon = () => (
@@ -11,7 +11,7 @@ const GoogleIcon = () => (
     </svg>
 );
 
-export default function LandingPage({ onLogin }) {
+export default function LandingPage() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
@@ -41,6 +41,7 @@ export default function LandingPage({ onLogin }) {
                 </div>
 
                 <div className="nav-actions">
+                    <Link className="nav-link" to="/branding">About</Link>
                 </div>
             </nav>
 

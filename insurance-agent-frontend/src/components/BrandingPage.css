@@ -1,0 +1,110 @@
+.branding-page {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 80% 20%, #161548, transparent 46%), #090a15;
+  color: #f4f5ff;
+}
+
+.branding-bar,
+.branding-content {
+  width: min(1120px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.branding-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 22px;
+  border-bottom: 1px solid #ffffff26;
+}
+
+.branding-page a { color: #d6ceff; }
+
+.branding-identity,
+.branding-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.branding-identity img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.branding-hero {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  align-items: center;
+  gap: clamp(20px, 5vw, 70px);
+  padding-block: clamp(40px, 8vw, 100px);
+}
+
+.branding-hero h1 {
+  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.07em;
+}
+
+.branding-page p { color: #c2c5da; }
+
+.branding-hero p {
+  max-width: 42ch;
+  margin-block: 22px 26px;
+  font-size: 1.125rem;
+}
+
+.branding-page .branding-action {
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: #dcd4ff;
+  color: #1a1337;
+}
+
+.branding-art {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid #ffffff26;
+  border-radius: 24px;
+}
+
+.branding-capabilities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.branding-capabilities article {
+  padding: 22px;
+  background: #111223;
+  border: 1px solid #ffffff26;
+  border-radius: 14px;
+}
+
+.branding-capabilities svg { color: #b9a7ff; }
+.branding-capabilities h2 { margin-block: 10px 6px; font-size: 1.15rem; }
+
+.branding-access {
+  margin-top: 42px;
+  padding-block: 28px 48px;
+  border-top: 1px solid #ffffff26;
+}
+
+.branding-access p {
+  max-width: 72ch;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .branding-hero,
+  .branding-capabilities { grid-template-columns: 1fr; }
+  .branding-art { max-width: 360px; }
+}
