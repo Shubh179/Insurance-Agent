@@ -42,6 +42,7 @@ export default function LandingPage() {
 
                 <div className="nav-actions">
                     <Link className="nav-link" to="/branding">About</Link>
+                    <a className="nav-link" href="/privacy-policy">Privacy</a>
                 </div>
             </nav>
 

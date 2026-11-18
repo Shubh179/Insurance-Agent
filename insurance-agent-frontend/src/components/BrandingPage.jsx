@@ -43,8 +43,9 @@ export default function BrandingPage() {
 
         <section className="branding-access">
           <h2>How we use Google access</h2>
-          <p>Google sign-in identifies your account. Agent Insure requests read-only Gmail access and reads recent messages when you sync your inbox. Synced email data is stored in Supabase. The app sends relevant email information to Groq for tasks such as classification, policy analysis, and answering questions.</p>
+          <p>Google sign-in identifies your account. Agent Insure requests read-only Gmail access and reads recent messages when you sync your inbox. Synced email data is stored in Supabase. The app may send relevant email information to its AI provider to classify messages, analyze policies, and answer questions.</p>
           <p>For questions about Google access or your data, email <a href="mailto:shubhshah453@gmail.com">shubhshah453@gmail.com</a>.</p>
+          <p><a href="/privacy-policy">Privacy Policy</a></p>
         </section>
       </main>
     </div>

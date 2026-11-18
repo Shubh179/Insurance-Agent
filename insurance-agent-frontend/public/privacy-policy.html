@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy | Agent Insure</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <style>
+    body {
+      margin: 0;
+      background: #090a15;
+      color: #f4f5ff;
+      font: 1rem/1.65 system-ui, sans-serif;
+    }
+
+    main {
+      max-width: 68ch;
+      margin-inline: auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+
+    h1, h2 { line-height: 1.2; }
+    h1 { font-size: clamp(2rem, 6vw, 3rem); }
+    h2 { margin-top: 2rem; font-size: 1.3rem; }
+    p, li { color: #d1d4e8; }
+    a { color: #d6ceff; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <main>
+    <a href="/branding">About Agent Insure</a>
+    <h1>Agent Insure Privacy Policy</h1>
+    <p>Agent Insure helps you find and understand insurance information in your Gmail inbox. This policy explains what data the app handles when you sign in, sync email, and use its analysis features.</p>
+
+    <h2>Information we collect</h2>
+    <ul>
+      <li>When you sign in with Google, we receive your email address and Google account identifier. We also receive OAuth access tokens and, when Google provides one, a refresh token.</li>
+      <li>When you sync Gmail, we read recent messages to identify insurance correspondence. For messages classified as insurance-related, we save the message ID, sender, subject, snippet, message body, received date, and classification details.</li>
+      <li>When you use chat or analysis, we process your questions, relevant conversation context, and relevant insurance information to generate your response. Backend logs can contain account identifiers and diagnostic information.</li>
+    </ul>
+
+    <h2>How we use Google Sign-In and Gmail access</h2>
+    <p>We use your Google email address and account identifier to find or create your Agent Insure account and start an app session. The backend uses your OAuth tokens to access Gmail when you sync. The Gmail permission is read-only. We use the messages to identify insurance correspondence, answer questions, and generate policy summaries, risk assessments, and recommendations.</p>
+
+    <h2>Service providers</h2>
+    <p>Convex runs our backend and Supabase hosts our database. Depending on the backend configuration, relevant email excerpts or message contents and your questions may be sent to an AI provider such as Google Gemini or Groq to classify messages or generate requested analysis and answers.</p>
+
+    <h2>Storage and protection</h2>
+    <p>We store account records, Google OAuth tokens, app session records, and saved insurance emails in Supabase. Google OAuth tokens are kept on the backend. Your browser stores a separate Agent Insure session token to keep you signed in. The app uses HTTPS, and the backend checks session tokens before allowing access to protected account and email features.</p>
+
+    <h2>Revoking access and requesting deletion</h2>
+    <p>You can revoke future Gmail access from your <a href="https://myaccount.google.com/connections">Google Account connections</a>. Revoking access does not remove email data already saved by Agent Insure. To request deletion of your Agent Insure account or stored data, or to ask a privacy question, email <a href="mailto:shubhshah453@gmail.com">shubhshah453@gmail.com</a>.</p>
+  </main>
+</body>
+</html>
