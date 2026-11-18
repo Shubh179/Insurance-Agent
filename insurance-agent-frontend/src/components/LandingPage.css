@@ -179,8 +179,17 @@
 
 .hero-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 20px;
     margin-top: 12px;
+}
+
+.landing-demo-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    text-decoration: none;
 }
 
 .btn-premium {

@@ -24,8 +24,8 @@ export default function BrandingPage() {
           <div>
             <h1>Understand your insurance inbox.</h1>
             <p>Agent Insure is an AI assistant that helps you find policy details, make sense of coverage, and prepare questions for your insurer.</p>
-            <Link className="branding-action" to="/">
-              Open Agent Insure <ArrowRight size={17} aria-hidden="true" />
+            <Link className="branding-action" to="/demo">
+              Try with sample data <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </div>
           <img className="branding-art" src="/ai-core.png" alt="" />

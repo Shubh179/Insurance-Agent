@@ -59,13 +59,14 @@ export default function LandingPage() {
                     </h1>
 
                     <p className="hero-subtitle">
-                        The first rule-based underwriting system. Handle claims 10x faster with strong accuracy, live risk insights and customized recommendations.
+                        Find insurance information in your inbox, ask questions about coverage, and see how Agent Insure uses policy evidence in the sample demo.
                     </p>
 
                     <div className="hero-actions">
                         <button className="btn-google" onClick={() => window.location.href = "https://greedy-nightingale-153.convex.site/auth/google"}>
                             <GoogleIcon /> Continue with Google
                         </button>
+                        <Link className="btn-secondary landing-demo-link" to="/demo">Continue without login</Link>
                     </div>
 
 

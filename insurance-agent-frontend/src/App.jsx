@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-route
 import LandingPage from './components/LandingPage';
 import ChatInterface from './components/ChatInterface';
 import BrandingPage from './components/BrandingPage';
+import DemoPage from './components/DemoPage';
 
 function AuthHandler() {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/branding" element={<BrandingPage />} />
+        <Route path="/demo" element={<DemoPage />} />
         <Route path="/chat" element={
           <ProtectedRoute>
             <ChatInterface />
